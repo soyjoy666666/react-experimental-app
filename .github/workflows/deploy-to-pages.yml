@@ -1,0 +1,47 @@
+name: deployment to pages
+
+# masterブランチへのプッシュをトリガー設定
+on:
+  push:
+    branches: [ master ]
+
+
+# 実行する処理の設定
+jobs:
+  build-deploy:
+    # The type of runner that the job will run on
+    runs-on: ubuntu-latest
+
+    steps:
+      # ソースコードを取得
+      - uses: actions/checkout@v2
+
+      - name: setup node
+        uses: actions/setup-node@v1
+        with:
+          node-version: "12.x"
+      
+      - name: cache dependencies
+        uses: actions/cache@v1
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('**/yarn.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+      
+      # パッケージのインストール
+      - name: install
+        run: yarn install
+      
+      # Reactアプリのビルド
+      - name: build
+        run: yarn build
+
+
+      # ビルド成果物をpagesにデプロイ
+      - name: deploy
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./build
+        
